@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arduino Weather Station - Error</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; text-align: center; }
+        .error-card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .error-icon { font-size: 64px; color: #dc3545; margin-bottom: 20px; }
+        .error-title { color: #333; margin-bottom: 20px; }
+        .error-message { color: #666; margin-bottom: 30px; }
+        .retry-button { 
+            background: #007bff; 
+            color: white; 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            text-decoration: none;
+            display: inline-block;
+        }
+        .retry-button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-card">
+            <div class="error-icon">⚠️</div>
+            <h1 class="error-title">Error Loading Weather Data</h1>
+            <p class="error-message" th:text="${error}">An unexpected error occurred while loading the weather dashboard.</p>
+            <a href="/" class="retry-button">Try Again</a>
+        </div>
+    </div>
+</body>
+</html>

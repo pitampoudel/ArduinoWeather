@@ -4,6 +4,7 @@ import com.vardansoft.arduinoweather.model.WeatherData
 import com.vardansoft.arduinoweather.repository.WeatherDataRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 
 @Service
 class WeatherService(private val weatherDataRepository: WeatherDataRepository) {
@@ -86,5 +87,71 @@ class WeatherService(private val weatherDataRepository: WeatherDataRepository) {
         }
 
         logger.info("Environmental Assessment: ${conditions.joinToString(", ")}")
+    }
+
+    // Methods for index page data
+    fun getLatestReadings(): List<WeatherData> {
+        return try {
+            // Get all unique contexts first
+            val allData = weatherDataRepository.findAll()
+            val contexts = allData.map { it.context }.distinct()
+
+            // Get latest reading for each context
+            contexts.mapNotNull { context ->
+                weatherDataRepository.findTopByContextOrderByTimestampDesc(context)
+            }
+        } catch (e: Exception) {
+            logger.error("Error fetching latest readings: ${e.message}", e)
+            emptyList()
+        }
+    }
+
+    fun getRecentData(hours: Long = 24): List<WeatherData> {
+        return try {
+            val since = LocalDateTime.now().minusHours(hours)
+            weatherDataRepository.findByTimestampBetween(since, LocalDateTime.now())
+                .sortedByDescending { it.timestamp }
+                .take(50) // Limit to 50 most recent entries
+        } catch (e: Exception) {
+            logger.error("Error fetching recent data: ${e.message}", e)
+            emptyList()
+        }
+    }
+
+    fun getRecentAlerts(hours: Long = 24): List<WeatherData> {
+        return try {
+            val since = LocalDateTime.now().minusHours(hours)
+            weatherDataRepository.findByTimestampBetween(since, LocalDateTime.now())
+                .filter { it.alert.isNotEmpty() }
+                .sortedByDescending { it.timestamp }
+                .take(20) // Limit to 20 most recent alerts
+        } catch (e: Exception) {
+            logger.error("Error fetching recent alerts: ${e.message}", e)
+            emptyList()
+        }
+    }
+
+    fun getDataSummary(): Map<String, Any> {
+        return try {
+            val allData = weatherDataRepository.findAll()
+            val recentData = getRecentData(24)
+
+            mapOf(
+                "totalRecords" to allData.size,
+                "activeContexts" to allData.map { it.context }.distinct().size,
+                "recentRecords24h" to recentData.size,
+                "lastUpdate" to (allData.maxByOrNull { it.timestamp }?.timestamp ?: "No data"),
+                "alertsLast24h" to recentData.count { it.alert.isNotEmpty() }
+            )
+        } catch (e: Exception) {
+            logger.error("Error generating data summary: ${e.message}", e)
+            mapOf(
+                "totalRecords" to 0,
+                "activeContexts" to 0,
+                "recentRecords24h" to 0,
+                "lastUpdate" to "Error",
+                "alertsLast24h" to 0
+            )
+        }
     }
 }
