@@ -40,3 +40,14 @@ kotlin {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+tasks.jar {
+    enabled = false
+    archiveClassifier = ""
+}
+
+tasks.bootJar {
+    enabled = true
+    archiveClassifier = ""
+    mainClass.set("com.vardansoft.arduinoweather.ArduinoWeatherApplicationKt")
+}
