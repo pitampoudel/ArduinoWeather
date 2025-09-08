@@ -53,7 +53,9 @@
             </div>
             <div class="summary-card">
                 <h3>Last Update</h3>
-                <div class="value" style="font-size: 16px;" th:text="${#temporals.format(summary.lastUpdate, 'yyyy-MM-dd HH:mm:ss')}">No data</div>
+                <div class="value" style="font-size: 16px;" th:if="${summary.hasLastUpdate}" 
+                     th:text="${#dates.format(summary.lastUpdate, 'yyyy-MM-dd HH:mm:ss')}">No data</div>
+                <div class="value" style="font-size: 16px;" th:unless="${summary.hasLastUpdate}">No data</div>
             </div>
         </div>
 
@@ -99,7 +101,7 @@
                             </div>
                             <div class="data-item">
                                 <span>Updated:</span>
-                                <span th:text="${#temporals.format(reading.timestamp, 'yyyy-MM-dd HH:mm:ss')}">Never</span>
+                                <span th:text="${#dates.format(reading.timestamp, 'yyyy-MM-dd HH:mm:ss')}">Never</span>
                             </div>
                         </div>
                         <div th:if="${!reading.alert.isEmpty()}" 
@@ -118,14 +120,14 @@
                     <div th:each="alert : ${recentAlerts}" class="alert-item">
                         <div class="alert-header" th:text="${alert.context} + ' - ' + ${alert.alert}">Alert</div>
                         <div th:text="'Level: ' + ${alert.level}">Level</div>
-                        <div class="alert-time" th:text="${#temporals.format(alert.timestamp, 'yyyy-MM-dd HH:mm:ss')}">Time</div>
+                        <div class="alert-time" th:text="${#dates.format(alert.timestamp, 'yyyy-MM-dd HH:mm:ss')}">Time</div>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="refresh-info">
-            <p th:text="'Page refreshes automatically every 30 seconds | Last generated: ' + ${#temporals.format(currentTime, 'yyyy-MM-dd HH:mm:ss')}">
+            <p th:text="'Page refreshes automatically every 30 seconds | Last generated: ' + ${#dates.format(currentTime, 'yyyy-MM-dd HH:mm:ss')}">
                 Page refreshes automatically every 30 seconds | Last generated: Now
             </p>
         </div>

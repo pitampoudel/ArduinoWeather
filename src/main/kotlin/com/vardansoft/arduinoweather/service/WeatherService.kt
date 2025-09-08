@@ -135,21 +135,24 @@ class WeatherService(private val weatherDataRepository: WeatherDataRepository) {
         return try {
             val allData = weatherDataRepository.findAll()
             val recentData = getRecentData(24)
+            val lastUpdateTime = allData.maxByOrNull { it.timestamp }?.timestamp
 
-            mapOf(
+            mapOf<String, Any>(
                 "totalRecords" to allData.size,
                 "activeContexts" to allData.map { it.context }.distinct().size,
                 "recentRecords24h" to recentData.size,
-                "lastUpdate" to (allData.maxByOrNull { it.timestamp }?.timestamp ?: "No data"),
+                "lastUpdate" to (lastUpdateTime ?: LocalDateTime.now()),
+                "hasLastUpdate" to (lastUpdateTime != null),
                 "alertsLast24h" to recentData.count { it.alert.isNotEmpty() }
             )
         } catch (e: Exception) {
             logger.error("Error generating data summary: ${e.message}", e)
-            mapOf(
+            mapOf<String, Any>(
                 "totalRecords" to 0,
                 "activeContexts" to 0,
                 "recentRecords24h" to 0,
-                "lastUpdate" to "Error",
+                "lastUpdate" to LocalDateTime.now(),
+                "hasLastUpdate" to false,
                 "alertsLast24h" to 0
             )
         }
