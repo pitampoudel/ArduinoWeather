@@ -1,0 +1,40 @@
+# Ignore build outputs
+build/
+target/
+*.jar
+*.war
+
+# Ignore IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Ignore version control
+.git/
+.gitignore
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore temporary files
+*.tmp
+*.temp
+*.log
+
+# Ignore documentation
+*.md
+HELP.md
+
+# Ignore test reports
+test-results/
+reports/
+
+# Ignore Gradle wrapper jar (will be copied from gradle directory)
+gradle/wrapper/gradle-wrapper.jar
+
+# Ignore local environment files
+.env
+.env.local
