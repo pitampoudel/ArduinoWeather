@@ -3,133 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arduino Weather Station Dashboard</title>
+    <title>Weather Monitor</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { text-align: center; color: #333; margin-bottom: 30px; }
-        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .summary-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
-        .summary-card h3 { margin: 0 0 10px 0; color: #666; font-size: 14px; }
-        .summary-card .value { font-size: 24px; font-weight: bold; color: #333; }
-        .section { background: white; margin-bottom: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .section-header { background: #007bff; color: white; padding: 15px 20px; border-radius: 8px 8px 0 0; margin: 0; }
-        .section-content { padding: 20px; }
-        .readings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .reading-card { border: 1px solid #ddd; border-radius: 6px; padding: 15px; }
-        .reading-header { font-weight: bold; color: #007bff; margin-bottom: 10px; }
-        .reading-data { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px; }
-        .data-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #eee; }
-        .alert-item { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 10px; margin-bottom: 10px; }
-        .alert-header { font-weight: bold; color: #856404; }
-        .alert-time { font-size: 12px; color: #666; }
-        .no-data { text-align: center; color: #666; font-style: italic; padding: 20px; }
-        .refresh-info { text-align: center; color: #666; font-size: 12px; margin-top: 20px; }
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #f5f5f5;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+        }
+        .header h1 { 
+            margin: 0; 
+            font-size: 2em; 
+            color: #333; 
+        }
+        .header p { 
+            margin: 10px 0 0 0; 
+            color: #666; 
+        }
+
+        .reading-data { 
+            display: grid; 
+            gap: 15px; 
+        }
+        .data-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            padding: 15px; 
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #ddd;
+        }
+        .data-label { 
+            font-weight: 500; 
+            color: #555;
+        }
+        .data-value { 
+            font-weight: bold; 
+            font-size: 1.1em;
+        }
+
+        .status-good { border-left-color: #28a745; }
+        .status-good .data-value { color: #28a745; }
+        .status-warning { border-left-color: #ffc107; }
+        .status-warning .data-value { color: #ffc107; }
+        .status-danger { border-left-color: #dc3545; }
+        .status-danger .data-value { color: #dc3545; }
+
+        .no-data { 
+            text-align: center; 
+            color: #999; 
+            padding: 40px; 
+        }
+
+        .last-update {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🌡️ Arduino Weather Station Dashboard</h1>
-            <p>Real-time environmental monitoring system</p>
+            <h1>Weather Monitor</h1>
+            <p>Latest sensor readings</p>
         </div>
 
-        <div class="summary-grid">
-            <div class="summary-card">
-                <h3>Total Records</h3>
-                <div class="value" th:text="${summary.totalRecords}">0</div>
-            </div>
-            <div class="summary-card">
-                <h3>Active Sensors</h3>
-                <div class="value" th:text="${summary.activeContexts}">0</div>
-            </div>
-            <div class="summary-card">
-                <h3>Records (24h)</h3>
-                <div class="value" th:text="${summary.recentRecords24h}">0</div>
-            </div>
-            <div class="summary-card">
-                <h3>Alerts (24h)</h3>
-                <div class="value" th:text="${summary.alertsLast24h}">0</div>
-            </div>
-            <div class="summary-card">
-                <h3>Last Update</h3>
-                <div class="value" style="font-size: 16px;" th:if="${summary.hasLastUpdate}" 
-                     th:text="${#temporals.format(summary.lastUpdate, 'yyyy-MM-dd HH:mm:ss')}">No data</div>
-                <div class="value" style="font-size: 16px;" th:unless="${summary.hasLastUpdate}">No data</div>
-            </div>
+        <div th:if="${latestReadings == null || latestReadings.isEmpty()}" class="no-data">
+            <p>No data available</p>
+            <p>Please check if the sensor is connected.</p>
         </div>
 
-        <div class="section">
-            <h2 class="section-header">📊 Latest Readings</h2>
-            <div class="section-content">
-                <div th:if="${latestReadings.isEmpty()}" class="no-data">No recent readings available</div>
-                <div th:unless="${latestReadings.isEmpty()}" class="readings-grid">
-                    <div th:each="reading : ${latestReadings}" class="reading-card">
-                        <div class="reading-header" th:text="${reading.context}">Context</div>
-                        <div class="reading-data">
-                            <div class="data-item">
-                                <span>Temperature:</span>
-                                <span th:text="${reading.temperature} + '°C'">0°C</span>
-                            </div>
-                            <div class="data-item">
-                                <span>Humidity:</span>
-                                <span th:text="${reading.humidity} + '%'">0%</span>
-                            </div>
-                            <div class="data-item">
-                                <span>CO Level:</span>
-                                <span th:text="${reading.coLevel}">0</span>
-                            </div>
-                            <div class="data-item">
-                                <span>CO2 Level:</span>
-                                <span th:text="${reading.co2Level}">0</span>
-                            </div>
-                            <div class="data-item">
-                                <span>Air Quality:</span>
-                                <span th:text="${reading.airQuality}">0</span>
-                            </div>
-                            <div class="data-item">
-                                <span>Light Level:</span>
-                                <span th:text="${reading.lightLevel}">0</span>
-                            </div>
-                            <div class="data-item">
-                                <span>Pressure:</span>
-                                <span th:text="${reading.pressure} + ' hPa'">0 hPa</span>
-                            </div>
-                            <div class="data-item">
-                                <span>Signal:</span>
-                                <span th:text="${reading.signalStrength} + ' dBm'">0 dBm</span>
-                            </div>
-                            <div class="data-item">
-                                <span>Updated:</span>
-                                <span th:text="${#temporals.format(reading.timestamp, 'yyyy-MM-dd HH:mm:ss')}">Never</span>
-                            </div>
-                        </div>
-                        <div th:if="${!reading.alert.isEmpty()}" 
-                             style="margin-top: 10px; color: #d63384; font-weight: bold;"
-                             th:text="'Alert: ' + ${reading.alert}">Alert</div>
-                    </div>
+        <div th:unless="${latestReadings == null || latestReadings.isEmpty()}">
+            <div th:with="reading=${latestReadings[0]}" class="reading-data">
+                <!-- Temperature -->
+                <div class="data-item" 
+                     th:classappend="${reading.temperature < 18} ? 'status-danger' : (${reading.temperature > 26} ? 'status-danger' : 'status-good')">
+                    <div class="data-label">Temperature</div>
+                    <div class="data-value" th:text="${reading.temperature} + '°C'">0°C</div>
+                </div>
+
+                <!-- Humidity -->
+                <div class="data-item" 
+                     th:classappend="${reading.humidity < 30} ? 'status-warning' : (${reading.humidity > 70} ? 'status-warning' : 'status-good')">
+                    <div class="data-label">Humidity</div>
+                    <div class="data-value" th:text="${reading.humidity} + '%'">0%</div>
+                </div>
+
+                <!-- CO Level -->
+                <div class="data-item" 
+                     th:classappend="${reading.coLevel > 400} ? 'status-danger' : (${reading.coLevel > 250} ? 'status-warning' : 'status-good')">
+                    <div class="data-label">CO Level</div>
+                    <div class="data-value" th:text="${reading.coLevel == 0 ? 'Safe' : reading.coLevel}">Safe</div>
+                </div>
+
+                <!-- CO2 Level -->
+                <div class="data-item" 
+                     th:classappend="${reading.co2Level > 800} ? 'status-warning' : 'status-good'">
+                    <div class="data-label">CO2 Level</div>
+                    <div class="data-value" th:text="${reading.co2Level}">0</div>
+                </div>
+
+                <!-- Air Quality -->
+                <div class="data-item" 
+                     th:classappend="${reading.airQuality > 300} ? 'status-danger' : 'status-good'">
+                    <div class="data-label">Air Quality</div>
+                    <div class="data-value" th:text="${reading.airQuality > 300 ? 'Poor' : 'Good'}">Good</div>
+                </div>
+
+                <!-- Light Level -->
+                <div class="data-item status-good">
+                    <div class="data-label">Light Level</div>
+                    <div class="data-value" th:text="${reading.lightLevel}">0</div>
                 </div>
             </div>
-        </div>
 
-        <div class="section">
-            <h2 class="section-header">⚠️ Recent Alerts</h2>
-            <div class="section-content">
-                <div th:if="${recentAlerts.isEmpty()}" class="no-data">No recent alerts</div>
-                <div th:unless="${recentAlerts.isEmpty()}">
-                    <div th:each="alert : ${recentAlerts}" class="alert-item">
-                        <div class="alert-header" th:text="${alert.context} + ' - ' + ${alert.alert}">Alert</div>
-                        <div th:text="'Level: ' + ${alert.level}">Level</div>
-                        <div class="alert-time" th:text="${#temporals.format(alert.timestamp, 'yyyy-MM-dd HH:mm:ss')}">Time</div>
-                    </div>
-                </div>
+            <div class="last-update">
+                <p th:text="'Last updated: ' + ${#temporals.format(latestReadings[0].timestamp, 'MMM dd, HH:mm')}">Last updated: Now</p>
             </div>
-        </div>
-
-        <div class="refresh-info">
-            <p th:text="'Page refreshes automatically every 30 seconds | Last generated: ' + ${#temporals.format(currentTime, 'yyyy-MM-dd HH:mm:ss')}">
-                Page refreshes automatically every 30 seconds | Last generated: Now
-            </p>
         </div>
     </div>
 
