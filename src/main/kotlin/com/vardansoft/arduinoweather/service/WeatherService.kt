@@ -11,25 +11,54 @@ class WeatherService(private val weatherDataRepository: WeatherDataRepository) {
 
     private val logger = LoggerFactory.getLogger(WeatherService::class.java)
 
+    // Kathmandu average weather constants for fallback when sensors fail
+    companion object {
+        private const val KATHMANDU_AVERAGE_TEMPERATURE = 20.0f // Average temperature in Celsius
+        private const val KATHMANDU_AVERAGE_HUMIDITY = 65.0f    // Average humidity percentage
+    }
+
     fun processWeatherData(weatherData: WeatherData): Boolean {
         return try {
+            // Apply fallback logic for sensor failures (temperature and humidity = 0)
+            val processedWeatherData = applyFallbackLogic(weatherData)
 
             // Log detailed weather information
-            logWeatherData(weatherData)
+            logWeatherData(processedWeatherData)
 
             // Check for alerts
-            if (weatherData.alert.isNotEmpty()) {
-                logger.warn("ALERT: ${weatherData.alert} - Level: ${weatherData.level}")
+            if (processedWeatherData.alert.isNotEmpty()) {
+                logger.warn("ALERT: ${processedWeatherData.alert} - Level: ${processedWeatherData.level}")
             }
 
             // Save weather data to MongoDB
-            val savedData = weatherDataRepository.save(weatherData)
+            val savedData = weatherDataRepository.save(processedWeatherData)
             logger.info("Weather data saved to database with ID: ${savedData.id}")
 
             true
         } catch (e: Exception) {
             logger.error("Error processing weather data: ${e.message}", e)
             false
+        }
+    }
+
+    private fun applyFallbackLogic(weatherData: WeatherData): WeatherData {
+        val needsTemperatureFallback = weatherData.temperature == 0.0f
+        val needsHumidityFallback = weatherData.humidity == 0.0f
+
+        return if (needsTemperatureFallback || needsHumidityFallback) {
+            val fallbackTemp = if (needsTemperatureFallback) KATHMANDU_AVERAGE_TEMPERATURE else weatherData.temperature
+            val fallbackHumidity = if (needsHumidityFallback) KATHMANDU_AVERAGE_HUMIDITY else weatherData.humidity
+
+            logger.warn("Sensor failure detected! Applying Kathmandu averages - " +
+                       "Temperature: ${if (needsTemperatureFallback) "0°C → ${fallbackTemp}°C (Kathmandu avg)" else "${weatherData.temperature}°C"}, " +
+                       "Humidity: ${if (needsHumidityFallback) "0% → ${fallbackHumidity}% (Kathmandu avg)" else "${weatherData.humidity}%"}")
+
+            weatherData.copy(
+                temperature = fallbackTemp,
+                humidity = fallbackHumidity
+            )
+        } else {
+            weatherData
         }
     }
 
