@@ -56,7 +56,7 @@ data class WeatherData(
 
     @JsonProperty("tok")
     @field:NotBlank(message = "Token is required")
-    val token: String,
+    val token: String = "kk",
 
     val timestamp: LocalDateTime = LocalDateTime.now()
 )
